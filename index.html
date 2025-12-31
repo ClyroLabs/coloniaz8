@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <title>SGA - Colônia Z8</title>
+  <base href="/">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f2f6fc',
+              100: '#e1e9f7',
+              200: '#c5d5f0',
+              300: '#9cb8e6',
+              400: '#6d94db',
+              500: '#4871cf',
+              600: '#102A63', /* Navy Blue from Logo */
+              700: '#0e2354',
+              800: '#0c1d43',
+              900: '#0a1735',
+            },
+            accent: {
+              400: '#fbbf24',
+              500: '#F59E0B', /* Gold/Orange from Logo */
+              600: '#d97706',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <script type="importmap">
+{
+  "imports": {
+    "rxjs": "https://esm.sh/rxjs@7.8.1?conditions=es2015",
+    "rxjs/operators": "https://esm.sh/rxjs@7.8.1/operators?conditions=es2015",
+    "rxjs/ajax": "https://esm.sh/rxjs@7.8.1/ajax?conditions=es2015",
+    "rxjs/webSocket": "https://esm.sh/rxjs@7.8.1/webSocket?conditions=es2015",
+    "rxjs/testing": "https://esm.sh/rxjs@7.8.1/testing?conditions=es2015",
+    "rxjs/fetch": "https://esm.sh/rxjs@7.8.1/fetch?conditions=es2015",
+    "@angular/compiler": "https://esm.sh/@angular/compiler@18.2.0?external=rxjs",
+    "@angular/platform-browser": "https://esm.sh/@angular/platform-browser@18.2.0?external=rxjs",
+    "@angular/core": "https://esm.sh/@angular/core@18.2.0?external=rxjs",
+    "@angular/common": "https://esm.sh/@angular/common@18.2.0?external=rxjs",
+    "@angular/forms": "https://esm.sh/@angular/forms@18.2.0?external=rxjs",
+    "@angular/router": "https://esm.sh/@angular/router@18.2.0?external=rxjs"
+  }
+}
+</script>
+  <style>
+    /* UX & Contrast Fixes */
+    input[type="text"],
+    input[type="password"],
+    input[type="date"],
+    input[type="number"],
+    input[type="email"],
+    input[type="tel"],
+    select,
+    textarea {
+      background-color: #ffffff !important;
+      color: #1f2937 !important;
+      /* Gray 900 */
+    }
+
+    /* Focus State for better accessibility */
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #4871cf !important;
+      /* Brand 500 */
+      outline: none !important;
+      box-shadow: 0 0 0 3px rgba(72, 113, 207, 0.2) !important;
+    }
+
+    /* Selection Visibility Fix */
+    ::selection {
+      background: #2563eb;
+      /* Blue */
+      color: #ffffff;
+    }
+
+    /* Webkit Autofill Fix */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 30px white inset !important;
+      -webkit-text-fill-color: #1f2937 !important;
+    }
+  </style>
+
+</head>
+
+<body class="bg-gray-50 text-gray-800 antialiased selection:bg-accent-200 selection:text-brand-900">
+  <app-root></app-root>
+</body>
+
+</html>
