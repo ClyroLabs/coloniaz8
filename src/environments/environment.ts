@@ -1,5 +1,5 @@
 export const environment = {
     production: true,
-    supabaseUrl: 'https://jqkeelvwtfftmhddfiun.supabase.co',
-    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impxa2VlbHZ3dGZmdG1oZGRmaXVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNTA2MjQsImV4cCI6MjA4MjYyNjYyNH0.s87jbQZvckBrn7bq1CBc5rnWNDQY78qhkzO3TBDH3pE'
+    supabaseUrl: 'https://tbksmhxlanlrkdkdhmvj.supabase.co',
+    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRia3NtaHhsYW5scmtka2RobXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMjk5NzYsImV4cCI6MjA4MjcwNTk3Nn0._wmMem6NqSqm8pnfPSm7R509VpvPcmxRu1t8TDA_fjQ'
 };
