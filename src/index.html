@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>SGA - Colônia Z8</title>
+    <base href="/">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f2f6fc',
+                            100: '#e1e9f7',
+                            200: '#c5d5f0',
+                            300: '#9cb8e6',
+                            400: '#6d94db',
+                            500: '#4871cf',
+                            600: '#102A63',
+                            700: '#0e2354',
+                            800: '#0c1d43',
+                            900: '#0a1735',
+                        },
+                        accent: {
+                            400: '#fbbf24',
+                            500: '#F59E0B',
+                            600: '#d97706',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50 text-gray-800 antialiased selection:bg-accent-200 selection:text-brand-900">
+    <app-root></app-root>
+</body>
+
+</html>
