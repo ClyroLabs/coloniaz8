@@ -291,7 +291,7 @@ import { CommonModule } from '@angular/common';
                 </div>
                 
                 <div class="group">
-                  <label class="block text-sm font-bold text-gray-700 mb-2">WhatsApp / Telefone</label>
+                  <label class="block text-sm font-bold text-gray-700 mb-2">WhatsApp / Telefone <span class="text-gray-400 font-normal">(opcional)</span></label>
                   <div class="relative">
                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                        <svg class="h-5 w-5 text-gray-400 group-focus-within:text-brand-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
@@ -303,9 +303,6 @@ import { CommonModule } from '@angular/common';
                             placeholder="(83) 90000-0000" 
                             class="block w-full pl-10 pr-3 py-4 rounded-xl border-gray-300 shadow-sm border focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all bg-white hover:bg-gray-50 focus:bg-white placeholder-gray-400 text-gray-900 font-mono">
                   </div>
-                  @if (form.get('phone')?.invalid && form.get('phone')?.touched) {
-                    <span class="text-xs text-red-500 font-bold mt-2 flex items-center gap-1">Campo obrigatório</span>
-                  }
                 </div>
               </div>
             </div>
@@ -436,11 +433,11 @@ export class BookingComponent {
   today = new Date();
   displayDate = signal(new Date());
 
-  // Form
+  // Form - Phone is now optional (configured in AppSettings)
   form = this.fb.group({
     name: ['', Validators.required],
     cpf: ['', [Validators.required, Validators.minLength(14)]],
-    phone: ['', Validators.required]
+    phone: ['']  // Optional - no Validators.required
   });
 
   successBooking = signal<Booking | null>(null);
@@ -449,8 +446,17 @@ export class BookingComponent {
   calendarMonthName = computed(() => this.displayDate().toLocaleDateString('pt-BR', { month: 'long' }));
 
   serviceStartDateMessage = computed(() => {
-    if (this.tempBooking.service_type === 'DAE') return '14/01/2026';
-    if (this.tempBooking.service_type === 'SEGURO') return '08/01/2026';
+    const settings = this.dataService.settings();
+    if (this.tempBooking.service_type === 'DAE') {
+      const daeDate = settings.daeStartDate || '2026-01-14';
+      const [y, m, d] = daeDate.split('-');
+      return `${d}/${m}/${y}`;
+    }
+    if (this.tempBooking.service_type === 'SEGURO') {
+      const seguroDate = settings.seguroStartDate || '2026-01-12';
+      const [y, m, d] = seguroDate.split('-');
+      return `${d}/${m}/${y}`;
+    }
     return '';
   });
 
@@ -472,7 +478,7 @@ export class BookingComponent {
 
   availableSlots = computed(() => {
     if (!this.tempBooking.date || !this.tempBooking.zone) return [];
-    return this.dataService.getSlotsForDateAndZone(this.tempBooking.date, this.tempBooking.zone);
+    return this.dataService.getSlotsForDateAndZone(this.tempBooking.date, this.tempBooking.zone, this.tempBooking.service_type);
   });
 
   changeMonth(delta: number) {

@@ -1,5 +1,5 @@
 import { Component, inject, signal, computed } from '@angular/core';
-import { DataService, Booking } from '../services/data.service';
+import { DataService, Booking, DateSlotOverride } from '../services/data.service';
 import { DatePipe, CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -189,6 +189,107 @@ import { FormsModule } from '@angular/forms';
                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Tempo para Auto-Conclusão (min)</label>
                  <input type="number" [(ngModel)]="tempAutoComplete" class="block w-full rounded-xl border-gray-300 border shadow-sm p-3 focus:ring-purple-500 focus:border-purple-500" title="Tempo após o horário marcado para marcar como concluído">
                </div>
+             </div>
+
+             <!-- NEW: Booking Rules Section -->
+             <div class="bg-gradient-to-r from-blue-50 to-cyan-50 p-5 rounded-xl border border-blue-100 mb-6">
+               <h4 class="font-bold text-blue-900 mb-4 text-sm flex items-center gap-2">
+                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                 Regras de Agendamento
+               </h4>
+               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <div>
+                   <label class="block text-xs font-bold text-gray-600 mb-2">Início Seguro Defeso</label>
+                   <input type="date" [(ngModel)]="tempSeguroStartDate" class="block w-full rounded-lg border-gray-300 border shadow-sm p-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                 </div>
+                 <div>
+                   <label class="block text-xs font-bold text-gray-600 mb-2">Início DAE</label>
+                   <input type="date" [(ngModel)]="tempDaeStartDate" class="block w-full rounded-lg border-gray-300 border shadow-sm p-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                 </div>
+                 <div>
+                   <label class="block text-xs font-bold text-gray-600 mb-2">Telefone Obrigatório</label>
+                   <label class="relative inline-flex items-center cursor-pointer mt-1">
+                     <input type="checkbox" [(ngModel)]="tempPhoneRequired" class="sr-only peer">
+                     <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                     <span class="ml-3 text-sm font-medium text-gray-700">{{ tempPhoneRequired ? 'Sim' : 'Não' }}</span>
+                   </label>
+                 </div>
+               </div>
+             </div>
+
+             <!-- NEW: Blocked Dates Section -->
+             <div class="bg-gradient-to-r from-red-50 to-orange-50 p-5 rounded-xl border border-red-100 mb-6">
+               <h4 class="font-bold text-red-900 mb-4 text-sm flex items-center gap-2">
+                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                 Datas Bloqueadas (Manualmente)
+               </h4>
+               <div class="flex gap-3 mb-3">
+                 <input type="date" [(ngModel)]="newBlockedDate" class="flex-grow rounded-lg border-gray-300 border shadow-sm p-2 text-sm focus:ring-red-500 focus:border-red-500">
+                 <button (click)="addBlockedDate()" [disabled]="!newBlockedDate" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 disabled:opacity-50 transition-all">
+                   + Bloquear
+                 </button>
+               </div>
+               @if (tempBlockedDates.length > 0) {
+                 <div class="flex flex-wrap gap-2">
+                   @for (date of tempBlockedDates; track date) {
+                     <div class="bg-white px-3 py-1 rounded-full border border-red-200 text-sm flex items-center gap-2 shadow-sm">
+                       <span class="font-mono text-red-800">{{ formatDateBr(date) }}</span>
+                       <button (click)="removeBlockedDate(date)" class="text-red-500 hover:text-red-700 font-bold">×</button>
+                     </div>
+                   }
+                 </div>
+               } @else {
+                 <p class="text-xs text-gray-500 italic">Nenhuma data bloqueada manualmente.</p>
+               }
+             </div>
+
+             <!-- NEW: Date Slot Overrides Section -->
+             <div class="bg-gradient-to-r from-green-50 to-teal-50 p-5 rounded-xl border border-green-100 mb-6">
+               <h4 class="font-bold text-green-900 mb-4 text-sm flex items-center gap-2">
+                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                 Limite de Vagas por Data/Serviço
+               </h4>
+               <div class="flex flex-col md:flex-row gap-3 mb-3">
+                 <input type="date" [(ngModel)]="newOverrideDate" placeholder="Data" class="flex-grow rounded-lg border-gray-300 border shadow-sm p-2 text-sm focus:ring-green-500 focus:border-green-500">
+                 <select [(ngModel)]="newOverrideService" class="rounded-lg border-gray-300 border shadow-sm p-2 text-sm focus:ring-green-500 focus:border-green-500">
+                   <option value="SEGURO">Seguro Defeso</option>
+                   <option value="DAE">DAE</option>
+                 </select>
+                 <input type="number" [(ngModel)]="newOverrideMaxSlots" min="1" placeholder="Máx. vagas" class="w-24 rounded-lg border-gray-300 border shadow-sm p-2 text-sm focus:ring-green-500 focus:border-green-500">
+                 <button (click)="addDateSlotOverride()" [disabled]="!newOverrideDate || newOverrideMaxSlots < 1" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 disabled:opacity-50 transition-all">
+                   + Adicionar
+                 </button>
+               </div>
+               @if (tempDateSlotsOverride.length > 0) {
+                 <div class="overflow-x-auto">
+                   <table class="min-w-full text-sm">
+                     <thead>
+                       <tr class="bg-white/50">
+                         <th class="px-3 py-2 text-left font-bold text-gray-600">Data</th>
+                         <th class="px-3 py-2 text-left font-bold text-gray-600">Serviço</th>
+                         <th class="px-3 py-2 text-left font-bold text-gray-600">Máx. Vagas</th>
+                         <th class="px-3 py-2 text-right font-bold text-gray-600">Ação</th>
+                       </tr>
+                     </thead>
+                     <tbody class="divide-y divide-green-100">
+                       @for (override of tempDateSlotsOverride; track override.date + override.service) {
+                         <tr class="bg-white/30">
+                           <td class="px-3 py-2 font-mono">{{ formatDateBr(override.date) }}</td>
+                           <td class="px-3 py-2">
+                             <span [class]="'px-2 py-0.5 rounded text-xs font-bold ' + (override.service === 'SEGURO' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800')">{{ override.service }}</span>
+                           </td>
+                           <td class="px-3 py-2 font-bold text-green-800">{{ override.maxSlots }}</td>
+                           <td class="px-3 py-2 text-right">
+                             <button (click)="removeDateSlotOverride(override)" class="text-red-500 hover:text-red-700 text-xs font-bold">Remover</button>
+                           </td>
+                         </tr>
+                       }
+                     </tbody>
+                   </table>
+                 </div>
+               } @else {
+                 <p class="text-xs text-gray-500 italic">Nenhum limite especial configurado. Usando cotas padrão.</p>
+               }
              </div>
 
              <!-- Security Section -->
@@ -432,7 +533,18 @@ export class AdminDashboardComponent {
   tempQuotaRural = this.dataService.settings().quotaRural;
   tempQuotaUrban = this.dataService.settings().quotaUrban;
   tempWhatsapp = this.dataService.settings().whatsappNumber;
-  tempAutoComplete = this.dataService.settings().autoCompleteMinutes; // Changed from tolerance to autoComplete
+  tempAutoComplete = this.dataService.settings().autoCompleteMinutes;
+  // New configurable settings
+  tempPhoneRequired = this.dataService.settings().phoneRequired;
+  tempSeguroStartDate = this.dataService.settings().seguroStartDate;
+  tempDaeStartDate = this.dataService.settings().daeStartDate;
+  tempBlockedDates = [...(this.dataService.settings().blockedDates || [])];
+  tempDateSlotsOverride = [...(this.dataService.settings().dateSlotsOverride || [])];
+  // Form inputs for adding new entries
+  newBlockedDate = '';
+  newOverrideDate = '';
+  newOverrideService: 'DAE' | 'SEGURO' = 'SEGURO';
+  newOverrideMaxSlots = 15;
   newPassword = '';
 
   filteredBookings = computed(() => {
@@ -533,7 +645,13 @@ export class AdminDashboardComponent {
       quotaRural: this.tempQuotaRural,
       quotaUrban: this.tempQuotaUrban,
       whatsappNumber: this.tempWhatsapp,
-      autoCompleteMinutes: this.tempAutoComplete // Save new setting
+      autoCompleteMinutes: this.tempAutoComplete,
+      // New configurable settings
+      phoneRequired: this.tempPhoneRequired,
+      seguroStartDate: this.tempSeguroStartDate,
+      daeStartDate: this.tempDaeStartDate,
+      blockedDates: this.tempBlockedDates,
+      dateSlotsOverride: this.tempDateSlotsOverride
     });
 
     if (this.newPassword) {
@@ -543,6 +661,47 @@ export class AdminDashboardComponent {
 
     this.showSettings.set(false);
     alert('Configurações e credenciais salvas!');
+  }
+
+  // --- HELPER METHODS FOR NEW CONFIG ---
+  addBlockedDate() {
+    if (this.newBlockedDate && !this.tempBlockedDates.includes(this.newBlockedDate)) {
+      this.tempBlockedDates.push(this.newBlockedDate);
+      this.newBlockedDate = '';
+    }
+  }
+
+  removeBlockedDate(date: string) {
+    this.tempBlockedDates = this.tempBlockedDates.filter(d => d !== date);
+  }
+
+  addDateSlotOverride() {
+    if (this.newOverrideDate && this.newOverrideMaxSlots > 0) {
+      // Remove existing override for same date/service combo
+      this.tempDateSlotsOverride = this.tempDateSlotsOverride.filter(
+        o => !(o.date === this.newOverrideDate && o.service === this.newOverrideService)
+      );
+      // Add new override
+      this.tempDateSlotsOverride.push({
+        date: this.newOverrideDate,
+        service: this.newOverrideService,
+        maxSlots: this.newOverrideMaxSlots
+      });
+      this.newOverrideDate = '';
+      this.newOverrideMaxSlots = 15;
+    }
+  }
+
+  removeDateSlotOverride(override: DateSlotOverride) {
+    this.tempDateSlotsOverride = this.tempDateSlotsOverride.filter(
+      o => !(o.date === override.date && o.service === override.service)
+    );
+  }
+
+  formatDateBr(dateStr: string): string {
+    if (!dateStr) return '';
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
   }
 
   exportCSV() {

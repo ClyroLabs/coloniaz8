@@ -25,11 +25,23 @@ export interface AdminUser {
   active: boolean; // New Soft Delete / Block Logic
 }
 
+export interface DateSlotOverride {
+  date: string;           // YYYY-MM-DD
+  service: 'DAE' | 'SEGURO';
+  maxSlots: number;
+}
+
 export interface AppSettings {
   quotaRural: number;
   quotaUrban: number;
   whatsappNumber: string;
-  autoCompleteMinutes: number; // Renamed from toleranceMinutes
+  autoCompleteMinutes: number;
+  // New configurable fields
+  phoneRequired: boolean;              // Phone field required or optional
+  seguroStartDate: string;             // Start date for Seguro Defeso (YYYY-MM-DD)
+  daeStartDate: string;                // Start date for DAE (YYYY-MM-DD)
+  blockedDates: string[];              // Manually blocked dates
+  dateSlotsOverride: DateSlotOverride[]; // Override slots for specific dates/services
 }
 
 interface AdminSession {
@@ -49,7 +61,15 @@ export class DataService {
     quotaRural: 15,
     quotaUrban: 15,
     whatsappNumber: '5583991176164',
-    autoCompleteMinutes: 30
+    autoCompleteMinutes: 30,
+    // New configurable fields with defaults
+    phoneRequired: false,                    // Phone is now optional by default
+    seguroStartDate: '2026-01-12',           // Seguro Defeso starts Jan 12, 2026
+    daeStartDate: '2026-01-14',              // DAE starts Jan 14, 2026
+    blockedDates: [],                        // No manually blocked dates initially
+    dateSlotsOverride: [
+      { date: '2026-01-12', service: 'SEGURO', maxSlots: 15 }  // 15 total slots (9 existing + 6 new)
+    ]
   });
 
   private readonly STORAGE_KEY_BOOKINGS = 'sga_bookings';
@@ -215,10 +235,9 @@ export class DataService {
     }
   }
 
-  // --- BUSINESS LOGIC HELPERS ---
-
   /**
    * Validates if a date is blocked based on Global Rules AND Service Specific Rules
+   * Now uses configurable settings for service start dates and manually blocked dates
    */
   isDateBlocked(dateStr: string, service_type?: 'DAE' | 'SEGURO'): boolean {
     const date = new Date(dateStr + 'T00:00:00');
@@ -226,6 +245,7 @@ export class DataService {
     const month = date.getMonth();
     const d = date.getDate();
     const year = date.getFullYear();
+    const currentSettings = this.settings();
 
     // 1. Global Calendar Boundaries
     if (year < 2024) return true;
@@ -243,26 +263,32 @@ export class DataService {
     const holidays = ['2024-12-25', '2025-01-01', '2025-04-21', '2025-05-01', '2025-09-07', '2025-10-12', '2025-11-02', '2025-11-15', '2025-12-25'];
     if (holidays.includes(dateStr)) return true;
 
-    // 5. SERVICE SPECIFIC RULES (2026)
+    // 5. Manually Blocked Dates (From Admin Configuration)
+    if (currentSettings.blockedDates && currentSettings.blockedDates.includes(dateStr)) return true;
+
+    // 6. SERVICE SPECIFIC RULES (Configurable Start Dates)
     if (service_type) {
-      // Rule 1: Seguro Defeso starts Jan 08, 2026
+      // Rule 1: Seguro Defeso starts from configured date
       if (service_type === 'SEGURO') {
-        if (dateStr < '2026-01-08') return true;
+        const seguroStart = currentSettings.seguroStartDate || '2026-01-12';
+        if (dateStr < seguroStart) return true;
       }
 
-      // Rule 2: Guia DAE starts Jan 14, 2026
+      // Rule 2: DAE starts from configured date
       if (service_type === 'DAE') {
-        if (dateStr < '2026-01-14') return true;
+        const daeStart = currentSettings.daeStartDate || '2026-01-14';
+        if (dateStr < daeStart) return true;
       }
     }
 
     return false;
   }
 
-  getSlotsForDateAndZone(dateStr: string, zone: 'RURAL' | 'URBANA'): { time: string, available: boolean }[] {
+  getSlotsForDateAndZone(dateStr: string, zone: 'RURAL' | 'URBANA', service_type?: 'DAE' | 'SEGURO'): { time: string, available: boolean }[] {
     const slots = [];
     let startHour = zone === 'RURAL' ? 8 : 13;
     let endHour = zone === 'RURAL' ? 12 : 17;
+    const currentSettings = this.settings();
 
     for (let h = startHour; h < endHour; h++) {
       slots.push({ time: `${h.toString().padStart(2, '0')}:00`, available: true });
@@ -270,8 +296,26 @@ export class DataService {
       slots.push({ time: `${h.toString().padStart(2, '0')}:40`, available: true });
     }
 
-    const bookingsOnDate = this.bookings().filter(b => b.date === dateStr && b.zone === zone && b.status !== 'CANCELADO');
-    const limit = zone === 'RURAL' ? this.settings().quotaRural : this.settings().quotaUrban;
+    // Filter bookings for this date, zone, and optionally service type
+    let bookingsOnDate = this.bookings().filter(b =>
+      b.date === dateStr &&
+      b.zone === zone &&
+      b.status !== 'CANCELADO'
+    );
+
+    // Check for date-specific slot override
+    let limit = zone === 'RURAL' ? currentSettings.quotaRural : currentSettings.quotaUrban;
+
+    if (service_type && currentSettings.dateSlotsOverride) {
+      const override = currentSettings.dateSlotsOverride.find(
+        o => o.date === dateStr && o.service === service_type
+      );
+      if (override) {
+        // Use override limit and filter bookings by service type
+        limit = override.maxSlots;
+        bookingsOnDate = bookingsOnDate.filter(b => b.service_type === service_type);
+      }
+    }
 
     if (bookingsOnDate.length >= limit) {
       return [];
