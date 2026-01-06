@@ -93,11 +93,11 @@ import { CommonModule } from '@angular/common';
                   (tempBooking.zone === 'RURAL' ? 'border-accent-500 bg-accent-50/30 shadow-md ring-1 ring-accent-500' : 'border-gray-200 bg-white hover:border-accent-300 hover:shadow-lg')">
                   <div class="flex justify-between items-center mb-2">
                     <span class="font-bold text-gray-900 text-lg">Zona Rural</span>
-                    <span [class]="'text-xs font-bold px-2 py-1 rounded uppercase tracking-wide ' + (tempBooking.zone === 'RURAL' ? 'bg-accent-100 text-accent-700' : 'bg-gray-100 text-gray-500')">Manhã</span>
+                    <span [class]="'text-xs font-bold px-2 py-1 rounded uppercase tracking-wide ' + (tempBooking.zone === 'RURAL' ? 'bg-accent-100 text-accent-700' : 'bg-gray-100 text-gray-500')">Tarde</span>
                   </div>
                   <div class="text-sm text-gray-500 flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                    Atendimento 08h às 12h
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Atendimento 15h30 às 18h
                   </div>
                 </button>
 
@@ -110,8 +110,8 @@ import { CommonModule } from '@angular/common';
                     <span [class]="'text-xs font-bold px-2 py-1 rounded uppercase tracking-wide ' + (tempBooking.zone === 'URBANA' ? 'bg-accent-100 text-accent-700' : 'bg-gray-100 text-gray-500')">Tarde</span>
                   </div>
                   <div class="text-sm text-gray-500 flex items-center gap-2">
-                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                    Atendimento 13h às 17h
+                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Atendimento 15h30 às 18h
                   </div>
                 </button>
               </div>
@@ -208,7 +208,7 @@ import { CommonModule } from '@angular/common';
                 <p class="text-gray-500 mt-1">Disponíveis para <span class="font-bold text-brand-600">{{ tempBooking.date | date:'dd/MM/yyyy' }}</span></p>
              </div>
              <div class="bg-brand-50 text-brand-700 px-4 py-2 rounded-lg text-sm font-bold border border-brand-100 shadow-sm">
-                {{ tempBooking.zone === 'RURAL' ? 'Zona Rural (Manhã)' : 'Zona Urbana (Tarde)' }}
+                {{ tempBooking.zone === 'RURAL' ? 'Zona Rural' : 'Zona Urbana' }}
              </div>
           </div>
 
@@ -583,14 +583,193 @@ export class BookingComponent {
 
   printReceipt() {
     const content = document.getElementById('receipt-print')?.innerHTML;
-    const win = window.open('', '', 'height=600,width=800');
-    if (win && content) {
-      win.document.write('<html><head><title>Comprovante</title></head><body>');
-      win.document.write(content);
-      win.document.write('</body></html>');
-      win.document.close();
-      win.print();
+    if (!content) {
+      alert('Não foi possível gerar o comprovante para impressão.');
+      return;
     }
+
+    // Detect iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    // For iOS Safari, use a different approach - print in current window
+    if (isIOS) {
+      this.printReceiptIOS(content);
+      return;
+    }
+
+    // Standard approach for desktop browsers
+    const win = window.open('', '_blank', 'height=600,width=800,scrollbars=yes');
+    if (win) {
+      const printContent = this.buildPrintDocument(content);
+      win.document.write(printContent);
+      win.document.close();
+
+      // Wait for document to be fully loaded before printing
+      win.onload = () => {
+        setTimeout(() => {
+          try {
+            win.print();
+          } catch (e) {
+            // Fallback for older browsers
+            try {
+              win.document.execCommand('print', false);
+            } catch (e2) {
+              console.error('Print failed:', e2);
+            }
+          }
+        }, 250);
+      };
+    } else {
+      // Fallback if popup blocked - use current window approach
+      this.printReceiptIOS(content);
+    }
+  }
+
+  private buildPrintDocument(content: string): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Comprovante de Agendamento - Colônia Z8</title>
+        <style>
+          @page { 
+            size: auto; 
+            margin: 10mm; 
+          }
+          @media print {
+            body { 
+              -webkit-print-color-adjust: exact !important; 
+              print-color-adjust: exact !important;
+              margin: 0;
+              padding: 0;
+            }
+          }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #fff;
+            color: #000;
+          }
+        </style>
+      </head>
+      <body>
+        ${content}
+      </body>
+      </html>
+    `;
+  }
+
+  private printReceiptIOS(content: string) {
+    // Create a hidden iframe for iOS printing
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;';
+    document.body.appendChild(iframe);
+
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!iframeDoc) {
+      // Fallback: create a print-friendly overlay
+      this.showPrintableOverlay(content);
+      return;
+    }
+
+    iframeDoc.open();
+    iframeDoc.write(this.buildPrintDocument(content));
+    iframeDoc.close();
+
+    // Give the iframe time to render
+    setTimeout(() => {
+      try {
+        iframe.contentWindow?.focus();
+
+        // Try using execCommand first (better Safari support)
+        try {
+          const success = iframe.contentWindow?.document.execCommand('print', false);
+          if (!success) {
+            iframe.contentWindow?.print();
+          }
+        } catch (e) {
+          iframe.contentWindow?.print();
+        }
+      } catch (e) {
+        console.error('iOS print failed:', e);
+        // Last resort: show printable overlay
+        this.showPrintableOverlay(content);
+      } finally {
+        // Clean up iframe after a delay
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 1000);
+      }
+    }, 500);
+  }
+
+  private showPrintableOverlay(content: string) {
+    // Create a full-screen printable overlay as last resort
+    const overlay = document.createElement('div');
+    overlay.id = 'print-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #fff;
+      z-index: 99999;
+      padding: 20px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    `;
+
+    overlay.innerHTML = `
+      <div style="max-width: 400px; width: 100%;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <button id="print-now-btn" style="
+            background: #0891b2; 
+            color: white; 
+            padding: 15px 40px; 
+            border: none; 
+            border-radius: 10px; 
+            font-size: 18px; 
+            font-weight: bold;
+            cursor: pointer;
+            margin-right: 10px;
+          ">📄 Imprimir Agora</button>
+          <button id="close-overlay-btn" style="
+            background: #6b7280; 
+            color: white; 
+            padding: 15px 30px; 
+            border: none; 
+            border-radius: 10px; 
+            font-size: 18px; 
+            font-weight: bold;
+            cursor: pointer;
+          ">✕ Fechar</button>
+        </div>
+        <p style="text-align: center; color: #666; font-size: 14px; margin-bottom: 20px;">
+          📱 Dica: Você também pode tirar um screenshot desta tela
+        </p>
+        ${content}
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const printBtn = document.getElementById('print-now-btn');
+    const closeBtn = document.getElementById('close-overlay-btn');
+
+    printBtn?.addEventListener('click', () => {
+      window.print();
+    });
+
+    closeBtn?.addEventListener('click', () => {
+      document.body.removeChild(overlay);
+    });
   }
 
   goHome() {

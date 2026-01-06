@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SGA - Colônia Z8</title>
   <base href="/">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -94,6 +95,63 @@
     input:-webkit-autofill:active {
       -webkit-box-shadow: 0 0 0 30px white inset !important;
       -webkit-text-fill-color: #1f2937 !important;
+    }
+
+    /* Print Styles for iOS Safari and all browsers */
+    @media print {
+
+      /* Reset all elements */
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+
+      /* Hide everything except the print overlay */
+      body>*:not(#print-overlay) {
+        display: none !important;
+      }
+
+      /* When printing from overlay, show only content */
+      #print-overlay {
+        position: static !important;
+        padding: 0 !important;
+        background: white !important;
+      }
+
+      /* Hide print buttons during actual printing */
+      #print-now-btn,
+      #close-overlay-btn,
+      #print-overlay p[style*="color: #666"] {
+        display: none !important;
+      }
+
+      /* Ensure receipt content is visible and styled */
+      #receipt-print {
+        display: block !important;
+        position: relative !important;
+        visibility: visible !important;
+      }
+
+      /* Page setup for better iOS printing */
+      @page {
+        size: auto;
+        margin: 10mm;
+      }
+
+      /* Ensure fonts are readable */
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+        font-size: 12pt !important;
+        line-height: 1.4 !important;
+        background: white !important;
+        color: black !important;
+      }
+
+      /* Prevent page breaks inside receipt */
+      #receipt-print>div {
+        page-break-inside: avoid;
+      }
     }
   </style>
 

@@ -42,6 +42,10 @@ export interface AppSettings {
   daeStartDate: string;                // Start date for DAE (YYYY-MM-DD)
   blockedDates: string[];              // Manually blocked dates
   dateSlotsOverride: DateSlotOverride[]; // Override slots for specific dates/services
+  // Schedule time configuration
+  scheduleStartTime: string;           // Start time for scheduling (HH:MM format)
+  scheduleEndTime: string;             // End time for scheduling (HH:MM format)
+  scheduleIntervalMinutes: number;     // Interval between slots in minutes
 }
 
 interface AdminSession {
@@ -69,7 +73,11 @@ export class DataService {
     blockedDates: [],                        // No manually blocked dates initially
     dateSlotsOverride: [
       { date: '2026-01-12', service: 'SEGURO', maxSlots: 15 }  // 15 total slots (9 existing + 6 new)
-    ]
+    ],
+    // Schedule time configuration - NEW SCHEDULE: 15:30 to 18:00
+    scheduleStartTime: '15:30',              // Start time for scheduling
+    scheduleEndTime: '18:00',                // End time for scheduling
+    scheduleIntervalMinutes: 20              // Interval between slots in minutes
   });
 
   private readonly STORAGE_KEY_BOOKINGS = 'sga_bookings';
@@ -285,15 +293,27 @@ export class DataService {
   }
 
   getSlotsForDateAndZone(dateStr: string, zone: 'RURAL' | 'URBANA', service_type?: 'DAE' | 'SEGURO'): { time: string, available: boolean }[] {
-    const slots = [];
-    let startHour = zone === 'RURAL' ? 8 : 13;
-    let endHour = zone === 'RURAL' ? 12 : 17;
+    const slots: { time: string, available: boolean }[] = [];
     const currentSettings = this.settings();
 
-    for (let h = startHour; h < endHour; h++) {
-      slots.push({ time: `${h.toString().padStart(2, '0')}:00`, available: true });
-      slots.push({ time: `${h.toString().padStart(2, '0')}:20`, available: true });
-      slots.push({ time: `${h.toString().padStart(2, '0')}:40`, available: true });
+    // Use configurable schedule times (default: 15:30 to 18:00)
+    const startTime = currentSettings.scheduleStartTime || '15:30';
+    const endTime = currentSettings.scheduleEndTime || '18:00';
+    const intervalMinutes = currentSettings.scheduleIntervalMinutes || 20;
+
+    // Parse start and end times
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+
+    // Convert to total minutes for easier calculation
+    const startTotalMinutes = startHour * 60 + startMinute;
+    const endTotalMinutes = endHour * 60 + endMinute;
+
+    // Generate slots based on interval
+    for (let totalMinutes = startTotalMinutes; totalMinutes < endTotalMinutes; totalMinutes += intervalMinutes) {
+      const h = Math.floor(totalMinutes / 60);
+      const m = totalMinutes % 60;
+      slots.push({ time: `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`, available: true });
     }
 
     // Filter bookings for this date, zone, and optionally service type
@@ -510,6 +530,25 @@ export class DataService {
       throw new Error('Erro ao limpar banco de dados.');
     }
     this.bookings.set([]);
+  }
+
+  /**
+   * Deletes a single booking by ID.
+   * Available to all admins to handle cancellations or erroneous bookings.
+   */
+  async deleteBooking(id: string): Promise<{ success: boolean, message: string }> {
+    const { error } = await supabase
+      .from('bookings')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Supabase Delete Error', error);
+      return { success: false, message: 'Erro ao excluir agendamento.' };
+    }
+
+    this.bookings.update(current => current.filter(b => b.id !== id));
+    return { success: true, message: 'Agendamento excluído com sucesso!' };
   }
 
   // --- EXPORT & IMPORT UTILS ---

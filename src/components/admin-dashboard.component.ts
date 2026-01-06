@@ -217,6 +217,31 @@ import { FormsModule } from '@angular/forms';
                </div>
              </div>
 
+              <!-- NEW: Schedule Times Section (MASTER ONLY) -->
+              <div class="bg-gradient-to-r from-cyan-50 to-sky-50 p-5 rounded-xl border border-cyan-100 mb-6">
+                <h4 class="font-bold text-cyan-900 mb-4 text-sm flex items-center gap-2">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  Horários de Atendimento
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-2">Horário Início</label>
+                    <input type="time" [(ngModel)]="tempScheduleStartTime" class="block w-full rounded-lg border-gray-300 border shadow-sm p-2 text-sm focus:ring-cyan-500 focus:border-cyan-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-2">Horário Fim</label>
+                    <input type="time" [(ngModel)]="tempScheduleEndTime" class="block w-full rounded-lg border-gray-300 border shadow-sm p-2 text-sm focus:ring-cyan-500 focus:border-cyan-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-2">Intervalo (minutos)</label>
+                    <input type="number" [(ngModel)]="tempScheduleIntervalMinutes" min="5" max="60" step="5" class="block w-full rounded-lg border-gray-300 border shadow-sm p-2 text-sm focus:ring-cyan-500 focus:border-cyan-500">
+                  </div>
+                </div>
+                <p class="text-xs text-cyan-600 mt-3 italic">
+                  Horário atual: {{ tempScheduleStartTime }} às {{ tempScheduleEndTime }} (intervalos de {{ tempScheduleIntervalMinutes }} min)
+                </p>
+              </div>
+
              <!-- NEW: Blocked Dates Section -->
              <div class="bg-gradient-to-r from-red-50 to-orange-50 p-5 rounded-xl border border-red-100 mb-6">
                <h4 class="font-bold text-red-900 mb-4 text-sm flex items-center gap-2">
@@ -348,21 +373,85 @@ import { FormsModule } from '@angular/forms';
 
         <!-- Booking List -->
         <div class="bg-white shadow-xl shadow-gray-200/50 rounded-2xl overflow-hidden border border-gray-100">
-          <div class="px-6 py-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50/50">
-            <h3 class="text-lg font-bold text-gray-900">Agendamentos Recentes</h3>
-            <div class="flex gap-2 w-full sm:w-auto items-center">
-               <div class="relative flex-grow sm:flex-grow-0">
-                  <input type="text" placeholder="Buscar CPF ou Nome..." 
-                      (input)="filterText.set($any($event.target).value)"
-                      class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-full sm:w-64">
-                  <svg class="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-               </div>
-               
-               <button (click)="clearAll()" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors flex items-center gap-1" title="Limpar todos os agendamentos">
-                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                 <span class="text-xs font-bold hidden sm:inline">Limpar Tudo</span>
-               </button>
+          <div class="px-6 py-6 border-b border-gray-100 bg-gray-50/50">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+              <h3 class="text-lg font-bold text-gray-900">Agendamentos Recentes</h3>
+              <div class="flex gap-2 items-center">
+                <button (click)="toggleFilters()" class="text-sm font-bold text-brand-600 hover:text-brand-800 px-3 py-1.5 rounded-lg hover:bg-brand-50 transition-colors flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                  {{ showFilters() ? 'Ocultar' : 'Filtros' }}
+                </button>
+                <button (click)="clearAll()" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors flex items-center gap-1" title="Limpar todos os agendamentos">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  <span class="text-xs font-bold hidden sm:inline">Limpar Tudo</span>
+                </button>
+              </div>
             </div>
+
+            <!-- Advanced Filters Panel -->
+            @if (showFilters()) {
+              <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm animate-fade-in">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                  <!-- Name Filter -->
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome</label>
+                    <input type="text" placeholder="Buscar por nome..." 
+                        (input)="filterName.set($any($event.target).value)"
+                        [value]="filterName()"
+                        class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+                  </div>
+                  <!-- CPF Filter -->
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">CPF</label>
+                    <input type="text" placeholder="000.000.000-00" 
+                        (input)="filterCpf.set($any($event.target).value)"
+                        [value]="filterCpf()"
+                        class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 font-mono">
+                  </div>
+                  <!-- Phone Filter -->
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Telefone</label>
+                    <input type="text" placeholder="(83) 90000-0000" 
+                        (input)="filterPhone.set($any($event.target).value)"
+                        [value]="filterPhone()"
+                        class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 font-mono">
+                  </div>
+                  <!-- Service Type Filter -->
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Serviço</label>
+                    <select (change)="filterService.set($any($event.target).value)"
+                        [value]="filterService()"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+                      <option value="">Todos</option>
+                      <option value="DAE">DAE</option>
+                      <option value="SEGURO">Seguro Defeso</option>
+                    </select>
+                  </div>
+                  <!-- Date Filter -->
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Data</label>
+                    <input type="date" 
+                        (input)="filterDate.set($any($event.target).value)"
+                        [value]="filterDate()"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+                  </div>
+                </div>
+                <div class="flex justify-end mt-3 pt-3 border-t border-gray-100">
+                  <button (click)="clearFilters()" class="text-xs font-bold text-gray-500 hover:text-gray-700 px-3 py-1 rounded hover:bg-gray-100 transition-colors">
+                    Limpar Filtros
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <!-- Simple Search (when filters are hidden) -->
+              <div class="relative max-w-md">
+                <input type="text" placeholder="Busca rápida (CPF ou Nome)..." 
+                    (input)="filterText.set($any($event.target).value)"
+                    [value]="filterText()"
+                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-full">
+                <svg class="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              </div>
+            }
           </div>
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-100">
@@ -398,9 +487,15 @@ import { FormsModule } from '@angular/forms';
                       </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      @if (booking.status === 'PENDENTE') {
-                        <button type="button" (click)="openReschedule(booking)" class="text-blue-600 hover:text-blue-900 font-bold text-xs uppercase tracking-wide cursor-pointer z-10 relative">Editar</button>
-                      }
+                      <div class="flex items-center justify-end gap-3">
+                        @if (booking.status === 'PENDENTE') {
+                          <button type="button" (click)="openReschedule(booking)" class="text-blue-600 hover:text-blue-900 font-bold text-xs uppercase tracking-wide cursor-pointer">Editar</button>
+                        }
+                        <button type="button" (click)="deleteBooking(booking.id)" class="text-red-500 hover:text-red-700 font-bold text-xs uppercase tracking-wide cursor-pointer flex items-center gap-1">
+                          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          Excluir
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 }
@@ -521,7 +616,15 @@ export class AdminDashboardComponent {
   filterText = signal('');
   showSettings = signal(false);
   showImport = signal(false);
+  showFilters = signal(false);
   importPreview = signal<Booking[]>([]);
+
+  // Advanced Filter Signals
+  filterName = signal('');
+  filterCpf = signal('');
+  filterPhone = signal('');
+  filterService = signal('');
+  filterDate = signal('');
 
   // Edit/Reschedule State
   reschedulingBooking = signal<Booking | null>(null);
@@ -540,6 +643,10 @@ export class AdminDashboardComponent {
   tempDaeStartDate = this.dataService.settings().daeStartDate;
   tempBlockedDates = [...(this.dataService.settings().blockedDates || [])];
   tempDateSlotsOverride = [...(this.dataService.settings().dateSlotsOverride || [])];
+  // Schedule time settings
+  tempScheduleStartTime = this.dataService.settings().scheduleStartTime || '15:30';
+  tempScheduleEndTime = this.dataService.settings().scheduleEndTime || '18:00';
+  tempScheduleIntervalMinutes = this.dataService.settings().scheduleIntervalMinutes || 20;
   // Form inputs for adding new entries
   newBlockedDate = '';
   newOverrideDate = '';
@@ -548,11 +655,32 @@ export class AdminDashboardComponent {
   newPassword = '';
 
   filteredBookings = computed(() => {
-    const text = this.filterText().toLowerCase();
     const statusOrder = { 'PENDENTE': 1, 'CONCLUIDO': 2, 'CANCELADO': 3 };
 
+    // Get filter values
+    const textFilter = this.filterText().toLowerCase();
+    const nameFilter = this.filterName().toLowerCase();
+    const cpfFilter = this.filterCpf().replace(/\D/g, '');
+    const phoneFilter = this.filterPhone().replace(/\D/g, '');
+    const serviceFilter = this.filterService();
+    const dateFilter = this.filterDate();
+
     return this.dataService.bookings()
-      .filter(b => b.name.toLowerCase().includes(text) || b.cpf.includes(text))
+      .filter(b => {
+        // Simple text filter (when advanced filters are hidden)
+        if (textFilter && !this.showFilters()) {
+          return b.name.toLowerCase().includes(textFilter) || b.cpf.includes(textFilter);
+        }
+
+        // Advanced filters
+        if (nameFilter && !b.name.toLowerCase().includes(nameFilter)) return false;
+        if (cpfFilter && !b.cpf.replace(/\D/g, '').includes(cpfFilter)) return false;
+        if (phoneFilter && !b.phone.replace(/\D/g, '').includes(phoneFilter)) return false;
+        if (serviceFilter && b.service_type !== serviceFilter) return false;
+        if (dateFilter && b.date !== dateFilter) return false;
+
+        return true;
+      })
       .sort((a, b) => {
         const statusA = statusOrder[a.status];
         const statusB = statusOrder[b.status];
@@ -580,6 +708,22 @@ export class AdminDashboardComponent {
   toggleSettings() {
     this.showSettings.update(v => !v);
     this.showImport.set(false);
+  }
+
+  toggleFilters() {
+    this.showFilters.update(v => !v);
+    if (!this.showFilters()) {
+      this.clearFilters();
+    }
+  }
+
+  clearFilters() {
+    this.filterName.set('');
+    this.filterCpf.set('');
+    this.filterPhone.set('');
+    this.filterService.set('');
+    this.filterDate.set('');
+    this.filterText.set('');
   }
 
   toggleImport() {
@@ -629,6 +773,20 @@ export class AdminDashboardComponent {
     this.dataService.toggleAdminStatus(username);
   }
 
+  async deleteBooking(id: string) {
+    const booking = this.dataService.bookings().find(b => b.id === id);
+    if (!booking) return;
+
+    if (confirm(`Excluir agendamento de "${booking.name}"?\n\nEsta ação não pode ser desfeita e o horário ficará disponível novamente.`)) {
+      const result = await this.dataService.deleteBooking(id);
+      if (result.success) {
+        alert(result.message);
+      } else {
+        alert('Erro: ' + result.message);
+      }
+    }
+  }
+
   async clearAll() {
     if (confirm('ATENÇÃO: Isso apagará TODOS os agendamentos do sistema.\n\nEsta ação não pode ser desfeita. Deseja continuar?')) {
       try {
@@ -651,7 +809,11 @@ export class AdminDashboardComponent {
       seguroStartDate: this.tempSeguroStartDate,
       daeStartDate: this.tempDaeStartDate,
       blockedDates: this.tempBlockedDates,
-      dateSlotsOverride: this.tempDateSlotsOverride
+      dateSlotsOverride: this.tempDateSlotsOverride,
+      // Schedule time settings
+      scheduleStartTime: this.tempScheduleStartTime,
+      scheduleEndTime: this.tempScheduleEndTime,
+      scheduleIntervalMinutes: this.tempScheduleIntervalMinutes
     });
 
     if (this.newPassword) {
