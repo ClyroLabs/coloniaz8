@@ -93,7 +93,7 @@ import { CommonModule } from '@angular/common';
                   (tempBooking.zone === 'RURAL' ? 'border-accent-500 bg-accent-50/30 shadow-md ring-1 ring-accent-500' : 'border-gray-200 bg-white hover:border-accent-300 hover:shadow-lg')">
                   <div class="flex justify-between items-center mb-2">
                     <span class="font-bold text-gray-900 text-lg">Zona Rural</span>
-                    <span [class]="'text-xs font-bold px-2 py-1 rounded uppercase tracking-wide ' + (tempBooking.zone === 'RURAL' ? 'bg-accent-100 text-accent-700' : 'bg-gray-100 text-gray-500')">Tarde</span>
+                    <span class="text-xs font-bold px-2 py-1 rounded bg-green-100 text-green-700">{{ dataService.settings().quotaRural }} vagas/dia</span>
                   </div>
                   <div class="text-sm text-gray-500 flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -107,7 +107,7 @@ import { CommonModule } from '@angular/common';
                   (tempBooking.zone === 'URBANA' ? 'border-accent-500 bg-accent-50/30 shadow-md ring-1 ring-accent-500' : 'border-gray-200 bg-white hover:border-accent-300 hover:shadow-lg')">
                   <div class="flex justify-between items-center mb-2">
                     <span class="font-bold text-gray-900 text-lg">Zona Urbana</span>
-                    <span [class]="'text-xs font-bold px-2 py-1 rounded uppercase tracking-wide ' + (tempBooking.zone === 'URBANA' ? 'bg-accent-100 text-accent-700' : 'bg-gray-100 text-gray-500')">Tarde</span>
+                    <span class="text-xs font-bold px-2 py-1 rounded bg-green-100 text-green-700">{{ dataService.settings().quotaUrban }} vagas/dia</span>
                   </div>
                   <div class="text-sm text-gray-500 flex items-center gap-2">
                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -174,14 +174,19 @@ import { CommonModule } from '@angular/common';
               <!-- Updated isBlocked to pass serviceType -->
               @let isBlocked = dataService.isDateBlocked(dateStr, tempBooking.service_type);
               @let isSelected = tempBooking.date === dateStr;
+              @let isSoldOut = !isBlocked && isDateSoldOut(dateStr);
 
               <button 
-                (click)="!isBlocked && selectDate(dateStr)"
-                [disabled]="isBlocked"
+                (click)="!isBlocked && !isSoldOut && selectDate(dateStr)"
+                [disabled]="isBlocked || isSoldOut"
                 [class]="'h-12 sm:h-14 rounded-xl flex items-center justify-center font-bold text-sm sm:text-base transition-all duration-200 relative overflow-hidden ' + 
                  (isSelected ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/40 ring-2 ring-brand-600 ring-offset-2' : 
-                  (isBlocked ? 'bg-gray-50 text-gray-300 cursor-not-allowed opacity-60' : 'bg-white text-gray-700 border border-gray-200 hover:border-brand-400 hover:text-brand-600 hover:bg-brand-50'))">
+                  (isSoldOut ? 'bg-red-100 text-red-500 border-2 border-red-300 cursor-not-allowed' :
+                   (isBlocked ? 'bg-gray-50 text-gray-300 cursor-not-allowed opacity-60' : 'bg-white text-gray-700 border border-gray-200 hover:border-brand-400 hover:text-brand-600 hover:bg-brand-50')))">
                 {{ day }}
+                @if (isSoldOut) {
+                  <span class="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] uppercase font-bold text-red-600 tracking-tight">Esgotado</span>
+                }
               </button>
             }
           </div>
@@ -506,6 +511,22 @@ export class BookingComponent {
   }
   selectTime(time: string) {
     this.tempBooking.time = time;
+  }
+
+  /**
+   * Checks if a date has all slots taken (sold out) for the selected zone and service
+   */
+  isDateSoldOut(dateStr: string): boolean {
+    if (!this.tempBooking.zone || !this.tempBooking.service_type) return false;
+
+    // Get available slots for the date - if empty, the date is sold out
+    const slots = this.dataService.getSlotsForDateAndZone(
+      dateStr,
+      this.tempBooking.zone,
+      this.tempBooking.service_type
+    );
+
+    return slots.length === 0;
   }
 
   nextStep() {
