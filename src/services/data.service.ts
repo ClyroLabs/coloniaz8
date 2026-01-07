@@ -42,9 +42,11 @@ export interface AppSettings {
   daeStartDate: string;                // Start date for DAE (YYYY-MM-DD)
   blockedDates: string[];              // Manually blocked dates
   dateSlotsOverride: DateSlotOverride[]; // Override slots for specific dates/services
-  // Schedule time configuration
-  scheduleStartTime: string;           // Start time for scheduling (HH:MM format)
-  scheduleEndTime: string;             // End time for scheduling (HH:MM format)
+  // Schedule time configuration per zone
+  scheduleRuralStartTime: string;      // Start time for RURAL zone (HH:MM format)
+  scheduleRuralEndTime: string;        // End time for RURAL zone (HH:MM format)
+  scheduleUrbanaStartTime: string;     // Start time for URBANA zone (HH:MM format)
+  scheduleUrbanaEndTime: string;       // End time for URBANA zone (HH:MM format)
   scheduleIntervalMinutes: number;     // Interval between slots in minutes
 }
 
@@ -74,9 +76,11 @@ export class DataService {
     dateSlotsOverride: [
       { date: '2026-01-12', service: 'SEGURO', maxSlots: 15 }  // 15 total slots (9 existing + 6 new)
     ],
-    // Schedule time configuration - NEW SCHEDULE: 15:30 to 18:00
-    scheduleStartTime: '15:30',              // Start time for scheduling
-    scheduleEndTime: '18:00',                // End time for scheduling
+    // Schedule time configuration per zone
+    scheduleRuralStartTime: '08:00',         // Rural zone: 8h às 12h (manhã)
+    scheduleRuralEndTime: '12:00',
+    scheduleUrbanaStartTime: '15:30',        // Urbana zone: 15h30 às 18h (tarde)
+    scheduleUrbanaEndTime: '18:00',
     scheduleIntervalMinutes: 20              // Interval between slots in minutes
   });
 
@@ -137,9 +141,16 @@ export class DataService {
     }
 
     // Load Settings (Keep Local or move to DB later)
+    // MERGE stored settings with defaults to ensure new fields have values
     const storedSettings = localStorage.getItem(this.STORAGE_KEY_SETTINGS);
     if (storedSettings) {
-      this.settings.set(JSON.parse(storedSettings));
+      const savedSettings = JSON.parse(storedSettings);
+      const defaultSettings = this.settings();
+      // Merge: defaults first, then saved settings, but filter out undefined/empty values
+      const cleanedSavedSettings = Object.fromEntries(
+        Object.entries(savedSettings).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+      );
+      this.settings.set({ ...defaultSettings, ...cleanedSavedSettings });
     }
   }
 
@@ -296,9 +307,13 @@ export class DataService {
     const slots: { time: string, available: boolean }[] = [];
     const currentSettings = this.settings();
 
-    // Use configurable schedule times (default: 15:30 to 18:00)
-    const startTime = currentSettings.scheduleStartTime || '15:30';
-    const endTime = currentSettings.scheduleEndTime || '18:00';
+    // Use zone-specific schedule times
+    const startTime = zone === 'RURAL'
+      ? (currentSettings.scheduleRuralStartTime || '08:00')
+      : (currentSettings.scheduleUrbanaStartTime || '15:30');
+    const endTime = zone === 'RURAL'
+      ? (currentSettings.scheduleRuralEndTime || '12:00')
+      : (currentSettings.scheduleUrbanaEndTime || '18:00');
     const intervalMinutes = currentSettings.scheduleIntervalMinutes || 20;
 
     // Parse start and end times

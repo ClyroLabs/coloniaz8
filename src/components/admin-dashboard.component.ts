@@ -217,29 +217,62 @@ import { FormsModule } from '@angular/forms';
                </div>
              </div>
 
-              <!-- NEW: Schedule Times Section (MASTER ONLY) -->
+              <!-- NEW: Schedule Times Section PER ZONE (MASTER ONLY) -->
               <div class="bg-gradient-to-r from-cyan-50 to-sky-50 p-5 rounded-xl border border-cyan-100 mb-6">
                 <h4 class="font-bold text-cyan-900 mb-4 text-sm flex items-center gap-2">
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  Horários de Atendimento
+                  Horários de Atendimento por Zona
                 </h4>
+                
+                <!-- Rural Zone (Morning) -->
+                <div class="bg-white/60 p-4 rounded-lg border border-green-200 mb-4">
+                  <h5 class="font-bold text-green-800 mb-3 text-xs uppercase tracking-wide flex items-center gap-2">
+                    <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                    Zona Rural (Manhã)
+                  </h5>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs font-bold text-gray-600 mb-2">Horário Início</label>
+                      <input type="time" [(ngModel)]="tempScheduleRuralStartTime" class="block w-full rounded-lg border-gray-300 border shadow-sm p-2 text-sm focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <div>
+                      <label class="block text-xs font-bold text-gray-600 mb-2">Horário Fim</label>
+                      <input type="time" [(ngModel)]="tempScheduleRuralEndTime" class="block w-full rounded-lg border-gray-300 border shadow-sm p-2 text-sm focus:ring-green-500 focus:border-green-500">
+                    </div>
+                  </div>
+                  <p class="text-xs text-green-600 mt-2 italic">
+                    Horário atual: {{ tempScheduleRuralStartTime }} às {{ tempScheduleRuralEndTime }}
+                  </p>
+                </div>
+
+                <!-- Urban Zone (Afternoon) -->
+                <div class="bg-white/60 p-4 rounded-lg border border-blue-200 mb-4">
+                  <h5 class="font-bold text-blue-800 mb-3 text-xs uppercase tracking-wide flex items-center gap-2">
+                    <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    Zona Urbana (Tarde)
+                  </h5>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs font-bold text-gray-600 mb-2">Horário Início</label>
+                      <input type="time" [(ngModel)]="tempScheduleUrbanaStartTime" class="block w-full rounded-lg border-gray-300 border shadow-sm p-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                      <label class="block text-xs font-bold text-gray-600 mb-2">Horário Fim</label>
+                      <input type="time" [(ngModel)]="tempScheduleUrbanaEndTime" class="block w-full rounded-lg border-gray-300 border shadow-sm p-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                  </div>
+                  <p class="text-xs text-blue-600 mt-2 italic">
+                    Horário atual: {{ tempScheduleUrbanaStartTime }} às {{ tempScheduleUrbanaEndTime }}
+                  </p>
+                </div>
+
+                <!-- Interval (shared) -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label class="block text-xs font-bold text-gray-600 mb-2">Horário Início</label>
-                    <input type="time" [(ngModel)]="tempScheduleStartTime" class="block w-full rounded-lg border-gray-300 border shadow-sm p-2 text-sm focus:ring-cyan-500 focus:border-cyan-500">
-                  </div>
-                  <div>
-                    <label class="block text-xs font-bold text-gray-600 mb-2">Horário Fim</label>
-                    <input type="time" [(ngModel)]="tempScheduleEndTime" class="block w-full rounded-lg border-gray-300 border shadow-sm p-2 text-sm focus:ring-cyan-500 focus:border-cyan-500">
-                  </div>
-                  <div>
-                    <label class="block text-xs font-bold text-gray-600 mb-2">Intervalo (minutos)</label>
+                    <label class="block text-xs font-bold text-gray-600 mb-2">Intervalo entre Horários (minutos)</label>
                     <input type="number" [(ngModel)]="tempScheduleIntervalMinutes" min="5" max="60" step="5" class="block w-full rounded-lg border-gray-300 border shadow-sm p-2 text-sm focus:ring-cyan-500 focus:border-cyan-500">
                   </div>
                 </div>
-                <p class="text-xs text-cyan-600 mt-3 italic">
-                  Horário atual: {{ tempScheduleStartTime }} às {{ tempScheduleEndTime }} (intervalos de {{ tempScheduleIntervalMinutes }} min)
-                </p>
               </div>
 
              <!-- NEW: Blocked Dates Section -->
@@ -643,9 +676,11 @@ export class AdminDashboardComponent {
   tempDaeStartDate = this.dataService.settings().daeStartDate;
   tempBlockedDates = [...(this.dataService.settings().blockedDates || [])];
   tempDateSlotsOverride = [...(this.dataService.settings().dateSlotsOverride || [])];
-  // Schedule time settings
-  tempScheduleStartTime = this.dataService.settings().scheduleStartTime || '15:30';
-  tempScheduleEndTime = this.dataService.settings().scheduleEndTime || '18:00';
+  // Schedule time settings per zone
+  tempScheduleRuralStartTime = this.dataService.settings().scheduleRuralStartTime || '08:00';
+  tempScheduleRuralEndTime = this.dataService.settings().scheduleRuralEndTime || '12:00';
+  tempScheduleUrbanaStartTime = this.dataService.settings().scheduleUrbanaStartTime || '15:30';
+  tempScheduleUrbanaEndTime = this.dataService.settings().scheduleUrbanaEndTime || '18:00';
   tempScheduleIntervalMinutes = this.dataService.settings().scheduleIntervalMinutes || 20;
   // Form inputs for adding new entries
   newBlockedDate = '';
@@ -810,9 +845,11 @@ export class AdminDashboardComponent {
       daeStartDate: this.tempDaeStartDate,
       blockedDates: this.tempBlockedDates,
       dateSlotsOverride: this.tempDateSlotsOverride,
-      // Schedule time settings
-      scheduleStartTime: this.tempScheduleStartTime,
-      scheduleEndTime: this.tempScheduleEndTime,
+      // Schedule time settings per zone
+      scheduleRuralStartTime: this.tempScheduleRuralStartTime,
+      scheduleRuralEndTime: this.tempScheduleRuralEndTime,
+      scheduleUrbanaStartTime: this.tempScheduleUrbanaStartTime,
+      scheduleUrbanaEndTime: this.tempScheduleUrbanaEndTime,
       scheduleIntervalMinutes: this.tempScheduleIntervalMinutes
     });
 
